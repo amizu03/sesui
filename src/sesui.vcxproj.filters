@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="sesui\controls\window.cpp" />
+    <ClCompile Include="d3d9_render.cpp" />
+    <ClCompile Include="sesui\sesui.cpp" />
+    <ClCompile Include="sesui\input.cpp" />
+    <ClCompile Include="sesui\frame.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sesui\sesui.hpp" />
+    <ClInclude Include="d3d9_render.hpp" />
+  </ItemGroup>
+</Project>
