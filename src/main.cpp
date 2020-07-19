@@ -109,27 +109,36 @@ int main ( ) {
 		g_pd3dDevice->Clear ( 0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA ( 0, 0, 0, 255 ), 1.0f, 0 );
 
 		if ( g_pd3dDevice->BeginScene ( ) >= 0 ) {
-			sesui::begin_frame ( L"SESUI Test Window" );
 
-			sesui::begin_window ( L"SESUI Test Window", sesui::rect ( 200, 200, 600, 500 ) ); {
-				sesui::checkbox ( L"onii", test_checkbox1 );
-				sesui::checkbox ( L"is", test_checkbox2 );
-				sesui::checkbox ( L"a", test_checkbox3 );
-				sesui::checkbox ( L"fucking", test_checkbox4 );
-				sesui::checkbox ( L"hoe", test_checkbox5 );
-				sesui::tooltip ( L"Scales GUI appropriately" );
-				sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
-				sesui::tooltip ( L"Percentage slider thingy" );
-				sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
-				sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
-				sesui::tooltip ( L"Angle (degree) slider" );
-				sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
+				sesui::begin_frame(L"SESUI Test Window");
 
-				sesui::end_window ( );
-			}
+				sesui::menu_key(VK_INSERT);
 
-			sesui::render ( );
-			sesui::end_frame ( );
+				if (sesui::globals::opened)
+				{
+					sesui::begin_window(L"SESUI Test Window", sesui::rect(200, 200, 600, 500)); {
+						sesui::checkbox(L"onii", test_checkbox1);
+						sesui::checkbox(L"is", test_checkbox2);
+						sesui::checkbox(L"a", test_checkbox3);
+						sesui::checkbox(L"fucking", test_checkbox4);
+						sesui::checkbox(L"hoe", test_checkbox5);
+						sesui::tooltip(L"Scales GUI appropriately");
+						sesui::slider(L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f);
+						sesui::tooltip(L"Percentage slider thingy");
+						sesui::slider(L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%");
+						sesui::slider(L"double slider", test_double_slider, 0.0, 100.0);
+						sesui::tooltip(L"Angle (degree) slider");
+						sesui::slider(L"int slider", test_int_slider, 0, 360, L"%d deg");
+
+						sesui::end_window();
+					}
+
+
+
+					sesui::render();
+					sesui::end_frame();
+				}
+
 
 			/* save current frametime */
 			const auto ms = std::chrono::duration_cast< std::chrono::milliseconds >( std::chrono::system_clock::now ( ).time_since_epoch ( ) ).count ( );

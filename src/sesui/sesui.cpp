@@ -6,6 +6,7 @@ std::map< std::basic_string_view< sesui::ses_char >, sesui::globals::window_ctx_
 sesui::ses_string sesui::globals::cur_window = "";
 float sesui::globals::last_dpi = 1.0f;
 float sesui::globals::dpi = 1.0f;
+bool sesui::globals::opened;
 
 sesui::style_t sesui::style;
 sesui::c_draw_list sesui::draw_list;

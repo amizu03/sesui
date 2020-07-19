@@ -2,6 +2,12 @@
 #include <windows.h>
 #include "../sesui.hpp"
 
+void sesui::menu_key( int vK )
+{
+	if ( input::key_pressed(vK) )
+		sesui::globals::opened = !sesui::globals::opened;
+}
+
 //sesui_packer:resume
 void sesui::begin_window ( const ses_string& title, const rect& bounds ) {
 	/* set current window context */
@@ -53,6 +59,7 @@ void sesui::begin_window ( const ses_string& title, const rect& bounds ) {
 	const auto window_rect = rect ( window_entry->second.bounds.x, window_entry->second.bounds.y + scale_dpi(titlebar_rect.h - 6.0f), window_entry->second.bounds.w, window_entry->second.bounds.h - titlebar_rect.h + 6.0f );
 	const auto remove_rounding_rect = rect ( titlebar_rect.x, titlebar_rect.y + scale_dpi ( titlebar_rect.h - 6.0f), titlebar_rect.w, 6.0f * 2.0f );
 	const auto remove_rounding_rect_filler = rect ( remove_rounding_rect.x + 1.0f, remove_rounding_rect.y + 1.0f, remove_rounding_rect.w -unscale_dpi( 2.0f), remove_rounding_rect.h + 6.0f );
+	const auto exit_rect = rect(window_entry->second.bounds.x + scale_dpi(25.f) + scale_dpi(window_entry->second.bounds.w) - scale_dpi(60.f), window_entry->second.bounds.y + scale_dpi(titlebar_rect.h - 6.0f) - scale_dpi(35.f), 20.f, 20.f);
 
 	/* window rect */
 	draw_list.add_rounded_rect ( titlebar_rect, style.rounding, style.window_accent, true );
@@ -64,6 +71,20 @@ void sesui::begin_window ( const ses_string& title, const rect& bounds ) {
 	draw_list.add_rect ( remove_rounding_rect, style.window_background, true );
 	draw_list.add_rect ( remove_rounding_rect, style.window_borders, false );
 	draw_list.add_rect ( remove_rounding_rect_filler, style.window_background, true );
+
+	draw_list.add_text(vec2(window_entry->second.bounds.x + scale_dpi(15.f), window_entry->second.bounds.y - scale_dpi(30.f) + scale_dpi(titlebar_rect.h - 6.0f)), style.control_font, title, true, color(200, 200, 200, 255), true);
+
+	/* close menu button*/
+	draw_list.add_rounded_rect(exit_rect, 3.0f, color(30, 30, 30, 255), true, true);
+	draw_list.add_rounded_rect(exit_rect, 3.0f, style.window_accent, false, true); /* rounding looks more smooth with outline for some reason wtf */
+
+	if (input::mouse_in_region(exit_rect))
+		draw_list.add_rounded_rect(exit_rect, 3.0f, color(static_cast<int>(style.window_accent.r), static_cast<int>(style.window_accent.g), static_cast<int>(style.window_accent.b), 50), true, true);
+
+	if (input::mouse_in_region(exit_rect) && input::key_pressed(VK_LBUTTON))
+		sesui::globals::opened = false;
+
+	draw_list.add_text(vec2(window_entry->second.bounds.x + scale_dpi(32.f) + scale_dpi(window_entry->second.bounds.w) - scale_dpi(60.f), window_entry->second.bounds.y + scale_dpi(titlebar_rect.h - 6.0f) - scale_dpi(34.f)), style.control_font, L"x", false, style.window_accent, true);
 
 	window_entry->second.cursor = vec2( window_entry->second.bounds.x, window_entry->second.bounds.y + scale_dpi( titlebar_rect.h) ) + vec2( scale_dpi ( style.initial_offset.x), scale_dpi ( style.initial_offset.y ));
 }

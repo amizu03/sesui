@@ -20,6 +20,7 @@ namespace sesui {
 	namespace globals {
 		extern float dpi;
 		extern float last_dpi;
+		extern bool opened;
 	}
 
 	inline float scale_dpi ( float x ) {
@@ -521,6 +522,9 @@ namespace sesui {
 
 	/* ends ui frame */
 	SESUI_API void end_frame ( );
+
+	/* make a menu key to open the window */
+	SESUI_API void menu_key( int vK );
 
 	/* creates new window */
 	SESUI_API void begin_window ( const ses_string& title, const rect& bounds );
