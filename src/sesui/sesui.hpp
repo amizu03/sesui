@@ -19,10 +19,15 @@
 namespace sesui {
 	namespace globals {
 		extern float dpi;
+		extern float last_dpi;
 	}
 
 	inline float scale_dpi ( float x ) {
 		return x * globals::dpi;
+	}
+
+	inline float unscale_dpi ( float x ) {
+		return x / globals::dpi;
 	}
 
 	/* constants */
@@ -89,6 +94,10 @@ namespace sesui {
 
 		auto len ( ) const {
 			return str.length ( );
+		}
+
+		bool empty ( )const {
+			return !len ( );
 		}
 
 		ses_string& operator=( const ses_string& other ) {
@@ -190,6 +199,17 @@ namespace sesui {
 			a = other.a;
 			return *this;
 		}
+
+		color lerp ( const color& to, float fraction ) {
+			const auto clamped_fraction = std::clamp < float > ( fraction, 0.0f, 1.0f );
+
+			return color (
+				static_cast< int > ( static_cast< float >( to.r - r ) * clamped_fraction + static_cast< float >( r ) ),
+				static_cast< int > ( static_cast< float >( to.g - g ) * clamped_fraction + static_cast< float >( g ) ),
+				static_cast< int > ( static_cast< float >( to.b - b ) * clamped_fraction + static_cast< float >( b ) ),
+				static_cast< int > ( static_cast< float >( to.a - a ) * clamped_fraction + static_cast< float >( a ) )
+			);
+		}
 	};
 
 	/* font type, placeholder pointer to actual font type you will actually use (temporary for now) */
@@ -213,13 +233,14 @@ namespace sesui {
 
 	using layer = uint8_t;
 
-	enum class layer_constants : uint8_t {
+	enum class layer_constants : layer {
 		topmost = 0xff
 	};
 	
 	namespace input {
 		extern std::array< bool, 256 > key_state;
 		extern std::array< bool, 256 > old_key_state;
+		extern vec2 start_click_pos;
 		extern vec2 mouse_pos;
 
 		/* call before any drawing is handled to gather input */
@@ -232,6 +253,8 @@ namespace sesui {
 		SESUI_API bool key_released ( int key );
 
 		SESUI_API bool mouse_in_region ( const rect& bounds );
+
+		SESUI_API bool click_in_region ( const rect& bounds );
 	}
 
 	namespace globals {
@@ -240,6 +263,13 @@ namespace sesui {
 			layer layer;
 			bool moving;
 			vec2 click_offset;
+			vec2 cursor;
+			std::array< float, 256 > anim_time;
+			std::array< float, 256 > hover_time;
+			std::basic_string < ses_char > selected_tooltip;
+			std::basic_string < ses_char > tooltip;
+			float tooltip_anim_time = 0.0f;
+			int cur_index;
 		};
 
 		extern std::map< std::basic_string_view< ses_char >, window_ctx_t > window_ctx;
@@ -256,10 +286,36 @@ namespace sesui {
 		/* percentage */
 		float titlebar_height = 0.1f /* 1/10 */;
 
+		vec2 initial_offset = vec2 ( 22.0f, 22.0f );
+		float spacing = 8.0f;
+		float padding = 6.0f;
+
+		float animation_speed = 4.0f;
+
+		/* control colors */
+		color control_background = color ( 66, 70, 77, 255 );
+		color control_borders = color ( 89, 92, 99, 255 );
+		color control_text = color ( 225, 225, 225, 255 );
+		color control_text_hovered = color ( 255, 255, 255, 255 );
+		color control_accent = color ( 255, 0, 77, 255 );
+		color control_accent_borders = color ( 255, 0 + 125, 77 + 125, 255 );
+
 		float rounding = 4.0f;
+		float control_rounding = 4.0f;
+		float tooltip_hover_time = 1.25f;
+		
+		/* control stuff */
+		vec2 checkbox_size = vec2( 14.0f, 14.0f );
+		vec2 slider_size = vec2 ( 160.0f, 8.0f );
+
+		font control_font = font( L"Comfortaa Regular", 16, 400, false );
 	};
 
 	extern style_t style;
+
+	namespace fonts {
+		extern std::array< uint8_t, 140136 > font_default;
+	}
 
 	/* draw list object, keeps all polygons and text that will need to be drawn by the ui framework */
 	class c_draw_list {
@@ -296,7 +352,7 @@ namespace sesui {
 			/* text information */
 			vec2 text_pos;
 			font font;
-			ses_string text;
+			std::basic_string < ses_char > text;
 			bool text_shadow;
 		};
 
@@ -317,6 +373,9 @@ namespace sesui {
 		using begin_clip_fn = std::add_pointer_t< void ( const rect& region ) noexcept >;
 		using end_clip_fn = std::add_pointer_t< void ( ) noexcept >;
 
+		/* create font */
+		using create_font_fn = std::add_pointer_t< void ( font& font, bool force ) noexcept >;
+
 		/* these methods must be defined in order for sesui to render any objects */
 		draw_polygon_fn draw_polygon;
 		draw_text_fn draw_text;
@@ -324,8 +383,9 @@ namespace sesui {
 		get_frametime_fn get_frametime;
 		begin_clip_fn begin_clip;
 		end_clip_fn end_clip;
+		create_font_fn create_font;
 		
-		void add_rounded_rect ( const rect& rectangle, float rad, const color& color, bool filled ) {
+		void add_rounded_rect ( const rect& rectangle, float rad, const color& color, bool filled, bool topmost = false ) {
 			const auto scaled_rad = scale_dpi ( rad );
 			const auto scaled_resolution = static_cast< int > ( scaled_rad * 0.666f + 0.5f );
 
@@ -348,7 +408,7 @@ namespace sesui {
 
 			objects.push_back ( object_t {
 				object_type::polygon,
-				globals::window_ctx [ globals::cur_window.get ( ) ].layer,
+				topmost ? static_cast < layer > ( layer_constants::topmost ) : globals::window_ctx [ globals::cur_window.get ( ) ].layer,
 				color,
 				{},
 				clip_mode::none,
@@ -361,7 +421,7 @@ namespace sesui {
 				} );
 		}
 
-		void add_rect ( const rect& rectangle, const color& color, bool filled ) {
+		void add_rect ( const rect& rectangle, const color& color, bool filled, bool topmost = false ) {
 			const auto scaled_w = scale_dpi ( rectangle.w );
 			const auto scaled_h = scale_dpi ( rectangle.h );
 
@@ -374,7 +434,7 @@ namespace sesui {
 
 			objects.push_back ( object_t {
 				object_type::polygon,
-				globals::window_ctx [ globals::cur_window.get ( ) ].layer,
+				topmost ? static_cast < layer > ( layer_constants::topmost ) : globals::window_ctx [ globals::cur_window.get ( ) ].layer,
 				color,
 				{},
 				clip_mode::none,
@@ -387,13 +447,13 @@ namespace sesui {
 			} );
 		}
 
-		void add_text ( const vec2& pos, const font& font, const ses_string& text, bool text_shadow, const color& color ) {
+		void add_text ( const vec2& pos, const font& font, const ses_string& text, bool text_shadow, const color& color, bool topmost = false ) {
 			if ( !font.data )
 				throw "Attempted to add text using invalid font to draw list.";
 
 			objects.push_back ( object_t {
 				object_type::text,
-				globals::window_ctx [ globals::cur_window.get ( ) ].layer,
+				topmost ? static_cast < layer > ( layer_constants::topmost ) : globals::window_ctx [ globals::cur_window.get ( ) ].layer,
 				color,
 				{},
 				clip_mode::none,
@@ -401,7 +461,7 @@ namespace sesui {
 				false,
 				pos,
 				font,
-				text,
+				text.get(),
 				text_shadow
 			} );
 		}
@@ -432,9 +492,9 @@ namespace sesui {
 						throw "Attempted to draw text using invalid font.";
 
 					if ( object.text_shadow )
-						draw_text ( object.text_pos + vec2 ( 2.0f, 2.0f ), object.font, object.text, object.color );
+						draw_text ( object.text_pos + vec2 ( 1.0f, 1.0f ), object.font, object.text.data ( ), color( 0, 0, 0, static_cast< int >( object.color.a ) ) );
 
-					draw_text ( object.text_pos, object.font, object.text, object.color );
+					draw_text ( object.text_pos, object.font, object.text.data(), object.color );
 					break;
 				case object_type::clip:
 					if ( object.clip_mode == clip_mode::begin )
@@ -464,7 +524,34 @@ namespace sesui {
 
 	/* creates new window */
 	SESUI_API void begin_window ( const ses_string& title, const rect& bounds );
+
 	SESUI_API void end_window ( );
+
+	/* other gui stuff */
+	SESUI_API void tooltip ( const ses_string& tooltip );
+
+	/* gui controls */
+	SESUI_API void checkbox ( const ses_string& title, bool& option );
+
+	SESUI_API void slider_ex ( const ses_string& title, float& option, float min, float max, const ses_string& value_str );
+
+	template < typename type >
+	inline void slider ( const ses_string& title, type& option, type min, type max, const ses_string fmt = L"" ) {
+		ses_string final_fmt = L"%d";
+
+		if constexpr ( std::is_floating_point< type >::value )
+			final_fmt = L"%.1f";
+
+		if ( !fmt.empty ( ) )
+			final_fmt = fmt;
+
+		wchar_t value_str [ 32 ];
+		swprintf_s ( value_str, final_fmt.get ( ), option );
+
+		float tmp = static_cast < float > ( option );
+		slider_ex ( title, tmp, min, max, value_str );
+		option = tmp;
+	}
 
 	/* call function after all ui logic to render all ui objects */
 	SESUI_API void render ( );

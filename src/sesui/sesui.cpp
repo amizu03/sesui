@@ -4,6 +4,7 @@
 //sesui_packer:resume
 std::map< std::basic_string_view< sesui::ses_char >, sesui::globals::window_ctx_t > sesui::globals::window_ctx;
 sesui::ses_string sesui::globals::cur_window = "";
+float sesui::globals::last_dpi = 1.0f;
 float sesui::globals::dpi = 1.0f;
 
 sesui::style_t sesui::style;

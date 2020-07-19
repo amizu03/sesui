@@ -1,4 +1,4 @@
-#include <d3d9.h>
+﻿#include <d3d9.h>
 #include <d3dx9.h>
 #include <windows.h>
 #include <cstdlib>
@@ -17,7 +17,12 @@ void CleanupDeviceD3D ( );
 void ResetDevice ( );
 LRESULT WINAPI WndProc ( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
+unsigned long font_count = 0;
+
 int main ( ) {
+	unsigned long font_count = 0;
+	AddFontMemResourceEx ( &sesui::fonts::font_default, sizeof sesui::fonts::font_default, nullptr, &font_count );
+
 	/* bind draw list methods to our own drawing functions */
 	sesui::draw_list.draw_polygon = render::polygon;
 	sesui::draw_list.draw_text = render::text;
@@ -25,6 +30,19 @@ int main ( ) {
 	sesui::draw_list.get_frametime = render::get_frametime;
 	sesui::draw_list.begin_clip = render::begin_clip;
 	sesui::draw_list.end_clip = render::end_clip;
+	sesui::draw_list.create_font = render::create_font;
+
+	//sesui::style.window_background = sesui::color ( 255, 255, 255, 255 );
+	//sesui::style.window_foreground = sesui::color ( 230, 230, 230, 255 );
+	//sesui::style.window_borders = sesui::color ( 214, 214, 214, 255 );
+	//sesui::style.window_accent = sesui::color ( 255, 0, 77, 255 );
+	//sesui::style.window_accent_borders = sesui::color ( 255, 0 + 125, 77 + 125, 255 );
+	//sesui::style.control_background = sesui::color ( 230, 230, 230, 255 );
+	//sesui::style.control_borders = sesui::color ( 214, 214, 214, 255 );
+	//sesui::style.control_text = sesui::color ( 26, 26, 26, 255 );
+	//sesui::style.control_text_hovered = sesui::color ( 56, 56, 56, 255 );
+	//sesui::style.control_accent = sesui::color ( 255, 0, 77, 255 );
+	//sesui::style.control_accent_borders = sesui::color ( 255, 0 + 125, 77 + 125, 255 );
 
 	WNDCLASSEX wc = { sizeof ( WNDCLASSEX ), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandleA ( nullptr ), nullptr, nullptr, nullptr, nullptr, "SESUI Test Window", nullptr };
 	::RegisterClassExA ( &wc );
@@ -43,6 +61,15 @@ int main ( ) {
 	memset ( &msg, 0, sizeof ( msg ) );
 
 	uint64_t last_render_ms = 0;
+
+	bool test_checkbox1 = false;
+	bool test_checkbox2 = false;
+	bool test_checkbox3 = false;
+	bool test_checkbox4 = false;
+	bool test_checkbox5 = false;
+	float test_float_slider = 0.0f;
+	double test_double_slider = 0.0;
+	int test_int_slider = 0;
 
 	/* gui data for testing */
 	while ( msg.message != WM_QUIT ) {
@@ -76,9 +103,8 @@ int main ( ) {
 		g_pd3dDevice->SetRenderState ( D3DRS_DESTBLENDALPHA, D3DBLEND_ONE );
 		g_pd3dDevice->SetRenderState ( D3DRS_SRGBWRITEENABLE, false );
 		g_pd3dDevice->SetRenderState ( D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA );
-
-		g_pd3dDevice->SetRenderState ( D3DRS_MULTISAMPLEANTIALIAS, false );
-		g_pd3dDevice->SetRenderState ( D3DRS_ANTIALIASEDLINEENABLE, false );
+		g_pd3dDevice->SetRenderState ( D3DRS_MULTISAMPLEANTIALIAS, true );
+		g_pd3dDevice->SetRenderState ( D3DRS_ANTIALIASEDLINEENABLE, true );
 
 		g_pd3dDevice->Clear ( 0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA ( 0, 0, 0, 255 ), 1.0f, 0 );
 
@@ -86,7 +112,18 @@ int main ( ) {
 			sesui::begin_frame ( L"SESUI Test Window" );
 
 			sesui::begin_window ( L"SESUI Test Window", sesui::rect ( 200, 200, 600, 500 ) ); {
-
+				sesui::checkbox ( L"onii", test_checkbox1 );
+				sesui::checkbox ( L"is", test_checkbox2 );
+				sesui::checkbox ( L"a", test_checkbox3 );
+				sesui::checkbox ( L"fucking", test_checkbox4 );
+				sesui::checkbox ( L"hoe", test_checkbox5 );
+				sesui::tooltip ( L"Scales GUI appropriately" );
+				sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
+				sesui::tooltip ( L"Percentage slider thingy" );
+				sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
+				sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
+				sesui::tooltip ( L"Angle (degree) slider" );
+				sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
 
 				sesui::end_window ( );
 			}
@@ -147,6 +184,11 @@ void ResetDevice ( ) {
 
 	if ( hr == D3DERR_INVALIDCALL )
 		abort();
+
+	if ( sesui::style.control_font.data ) {
+		reinterpret_cast< ID3DXFont* > ( sesui::style.control_font.data )->Release ( );
+		sesui::style.control_font.data = nullptr;
+	}
 }
 
 // Win32 message handler

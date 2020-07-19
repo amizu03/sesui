@@ -1,4 +1,5 @@
 #include "d3d9_render.hpp"
+#include "sesui/sesui.hpp"
 
 struct vertex_t {
 	float x, y, z, rhw;
@@ -14,12 +15,24 @@ struct custom_vertex_t {
 float render::frametime = 0.0f;
 IDirect3DDevice9* render::device = nullptr;
 
+void render::create_font ( sesui::font& font, bool force ) noexcept {
+	if ( force && font.data ) {
+		reinterpret_cast< ID3DXFont* > ( sesui::style.control_font.data )->Release ( );
+		sesui::style.control_font.data = nullptr;
+	}
+
+	if ( font.data )
+		return;
+
+	D3DXCreateFontW ( device, static_cast< int > ( static_cast< float >( sesui::style.control_font.size )* sesui::globals::dpi ), 0, sesui::style.control_font.weight, 0, sesui::style.control_font.italic, OEM_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, sesui::style.control_font.family.get ( ), reinterpret_cast< ID3DXFont** > ( &sesui::style.control_font.data ) );
+}
+
 void render::polygon ( const std::vector< sesui::vec2 >& verticies, const sesui::color& color, bool filled ) noexcept {
 	vertex_t* vtx = new vertex_t [ filled ? verticies.size ( ) : ( verticies.size ( ) + 1 ) ];
 
 	for ( auto i = 0; i < verticies.size ( ); i++ ) {
-		vtx[i].x = verticies [ i ].x - 0.5f;
-		vtx[i].y = verticies [ i ].y - 0.5f;
+		vtx[i].x = verticies [ i ].x;
+		vtx[i].y = verticies [ i ].y;
 		vtx [ i ].color = D3DCOLOR_RGBA ( color.r, color.g, color.b, color.a );
 		vtx[i].z = 0.0f;
 		vtx[i].rhw = 1.0f;
@@ -42,26 +55,13 @@ void render::text ( const sesui::vec2& pos, const sesui::font& font, const sesui
 		return;
 
 	RECT rect;
-	SetRect ( &rect, pos.x - 0.5f, pos.y - 0.5f, pos.x - 0.5f, pos.y - 0.5f );
-
-	const auto as_str = text.get ( );
-
-	if constexpr ( std::is_same< char, std::remove_pointer< decltype( as_str ) >::type >::value )
-		reinterpret_cast< ID3DXFont* >( font.data )->DrawTextA ( nullptr, reinterpret_cast< const char* >( as_str ), text.len ( ), &rect, DT_LEFT | DT_NOCLIP, D3DCOLOR_RGBA ( color.r, color.g, color.b, color.a ) );
-	else if constexpr ( std::is_same< wchar_t, std::remove_pointer< decltype( as_str ) >::type >::value )
-		reinterpret_cast< ID3DXFont* >( font.data )->DrawTextW ( nullptr, reinterpret_cast< const wchar_t* >( as_str ), text.len ( ), &rect, DT_LEFT | DT_NOCLIP, D3DCOLOR_RGBA ( color.r, color.g, color.b, color.a ) );
+	SetRect ( &rect, pos.x, pos.y, pos.x, pos.y );
+	reinterpret_cast< ID3DXFont* >( font.data )->DrawTextW ( nullptr, text.get ( ), text.len ( ), &rect, DT_LEFT | DT_NOCLIP, D3DCOLOR_RGBA ( color.r, color.g, color.b, color.a ) );
 }
 
 void render::get_text_size ( const sesui::font& font, const sesui::ses_string& text, sesui::vec2& dim_out ) noexcept {
 	RECT rect = { 0, 0, 0, 0 };
-
-	const auto as_str = text.get ( );
-	
-	if constexpr ( std::is_same< char, std::remove_pointer< decltype( as_str ) >::type >::value )
-		reinterpret_cast< ID3DXFont* >( font.data )->DrawTextA ( nullptr, reinterpret_cast< const char* >( as_str ), text.len ( ), &rect, DT_CALCRECT, 0 );
-	else if constexpr ( std::is_same< wchar_t, std::remove_pointer< decltype( as_str ) >::type >::value )
-		reinterpret_cast< ID3DXFont* >( font.data )->DrawTextW ( nullptr, reinterpret_cast< const wchar_t* >( as_str ), text.len ( ), &rect, DT_CALCRECT, 0 );
-
+	reinterpret_cast< ID3DXFont* >( font.data )->DrawTextW ( nullptr, text.get ( ), text.len ( ), &rect, DT_CALCRECT, 0 );
 	dim_out = { rect.right - rect.left, rect.bottom - rect.top };
 }
 

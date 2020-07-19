@@ -11,6 +11,7 @@ namespace render {
 	extern float frametime;
 	extern IDirect3DDevice9* device;
 
+	void create_font ( sesui::font& font, bool force ) noexcept;
 	void polygon ( const std::vector< sesui::vec2 >& verticies, const sesui::color& color, bool filled ) noexcept;
 	void text ( const sesui::vec2& pos, const sesui::font& font, const sesui::ses_string& text, const sesui::color& color ) noexcept;
 	void get_text_size ( const sesui::font& font, const sesui::ses_string& text, sesui::vec2& dim_out ) noexcept;

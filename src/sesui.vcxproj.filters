@@ -7,6 +7,10 @@
     <ClCompile Include="sesui\sesui.cpp" />
     <ClCompile Include="sesui\input.cpp" />
     <ClCompile Include="sesui\frame.cpp" />
+    <ClCompile Include="sesui\controls\checkbox.cpp" />
+    <ClCompile Include="sesui\fonts.cpp" />
+    <ClCompile Include="sesui\controls\slider.cpp" />
+    <ClCompile Include="sesui\other\tooltip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sesui\sesui.hpp" />
