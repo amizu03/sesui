@@ -33,7 +33,7 @@ bool sesui::begin_tabs ( int count, float width ) {
 	const auto tab_dim = vec2 ( window->second.tab_width, window_rect.h / static_cast< float >( window->second.tab_count ) );
 	const auto tab_pos = window_rect.y + window->second.selected_tab_offset;
 
-	draw_list.add_rect ( rect ( window_rect.x, tab_pos - scale_dpi ( 32.0f ) / 2.0f, tab_dim.x, 32.0f ), color ( 0, 0, 0, 50 ), true );
+	draw_list.add_rect ( rect ( window_rect.x, tab_pos - scale_dpi ( 32.0f ) / 2.0f, tab_dim.x, 32.0f ), style.tab_selected, true );
 
 	return true;
 }
