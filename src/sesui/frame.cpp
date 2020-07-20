@@ -15,5 +15,11 @@ void sesui::begin_frame ( const ses_string& window ) {
 
 /* ends ui frame */
 void sesui::end_frame ( ) {
-	globals::cur_window = "";
+	if ( input::queue_enable ) {
+		input::enabled = true;
+		input::queue_enable = false;
+	}
+
+	globals::cur_window = L"";
+	sesui::input::scroll_amount = 0.0f;
 }

@@ -11,6 +11,12 @@
     <ClCompile Include="sesui\fonts.cpp" />
     <ClCompile Include="sesui\controls\slider.cpp" />
     <ClCompile Include="sesui\other\tooltip.cpp" />
+    <ClCompile Include="sesui\controls\tabs.cpp" />
+    <ClCompile Include="sesui\controls\combobox.cpp" />
+    <ClCompile Include="sesui\controls\button.cpp" />
+    <ClCompile Include="sesui\controls\multiselect.cpp" />
+    <ClCompile Include="sesui\controls\colorpicker.cpp" />
+    <ClCompile Include="sesui\controls\groupbox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sesui\sesui.hpp" />

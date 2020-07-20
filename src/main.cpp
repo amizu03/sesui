@@ -70,6 +70,18 @@ int main ( ) {
 	float test_float_slider = 0.0f;
 	double test_double_slider = 0.0;
 	int test_int_slider = 0;
+	int test_tab_index = 0;
+	int test_combobox = 0;
+
+	bool test_multiselect1 = false;
+	bool test_multiselect2 = false;
+	bool test_multiselect3 = false;
+	bool test_multiselect4 = false;
+	bool test_multiselect5 = false;
+	bool test_multiselect6 = false;
+	bool test_multiselect7 = false;
+
+	bool opened = true;
 
 	/* gui data for testing */
 	while ( msg.message != WM_QUIT ) {
@@ -112,38 +124,95 @@ int main ( ) {
 
 				sesui::begin_frame(L"SESUI Test Window");
 
-				sesui::menu_key(VK_INSERT);
-
-				if (sesui::globals::opened)
-				{
-					sesui::begin_window(L"SESUI Test Window", sesui::rect(200, 200, 600, 500)); {
-						sesui::checkbox(L"onii", test_checkbox1);
-						sesui::checkbox(L"is", test_checkbox2);
-						sesui::checkbox(L"a", test_checkbox3);
-						sesui::checkbox(L"fucking", test_checkbox4);
-						sesui::checkbox(L"hoe", test_checkbox5);
-						sesui::tooltip(L"Scales GUI appropriately");
-						sesui::slider(L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f);
-						sesui::tooltip(L"Percentage slider thingy");
-						sesui::slider(L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%");
-						sesui::slider(L"double slider", test_double_slider, 0.0, 100.0);
-						sesui::tooltip(L"Angle (degree) slider");
-						sesui::slider(L"int slider", test_int_slider, 0, 360, L"%d deg");
-
-						sesui::end_window();
+				if( sesui::begin_window ( L"SESUI Test Window", sesui::rect ( 200, 200, 600, 500 ), opened, sesui::window_flags::no_closebutton )) {
+					if ( sesui::begin_tabs ( 8 ) ) {
+						sesui::tab ( L"rage", test_tab_index );
+						sesui::tab ( L"antiaim", test_tab_index );
+						sesui::tab ( L"legit", test_tab_index );
+						sesui::tab ( L"visuals", test_tab_index );
+						sesui::tab ( L"misc", test_tab_index );
+						sesui::tab ( L"players", test_tab_index );
+						sesui::tab ( L"skins", test_tab_index );
+						sesui::tab ( L"cheat", test_tab_index );
+						sesui::end_tabs ( );
 					}
 
+					switch ( test_tab_index ) {
+					case 0:
+						if ( sesui::begin_group ( L"group 1", sesui::rect ( 0.0f, 0.0f, 0.5f, 1.0f ), sesui::rect( 0.0f, 0.0f, -sesui::style.spacing * 0.5f, 0.0f ) ) ) {
+							sesui::checkbox ( L"onii", test_checkbox1 );
+							sesui::checkbox ( L"is", test_checkbox2 );
+							sesui::checkbox ( L"a", test_checkbox3 );
+							sesui::checkbox ( L"fucking", test_checkbox4 );
+							sesui::checkbox ( L"hoe", test_checkbox5 );
+							sesui::tooltip ( L"Scales GUI appropriately" );
+							sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
+							sesui::tooltip ( L"Percentage slider thingy" );
+							sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
+							sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
+							sesui::tooltip ( L"Angle (degree) slider" );
+							sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
+							sesui::combobox ( L"combobox test", test_combobox, { L"one", L"two", L"three", L"four", L"five" } );
+							sesui::multiselect ( L"multiselect test", { { L"one", test_multiselect1 }, { L"two", test_multiselect2 }, { L"three", test_multiselect3 }, { L"four", test_multiselect4 }, { L"five", test_multiselect5 }, { L"six", test_multiselect6 }, { L"seven", test_multiselect7 } } );
 
+							if ( sesui::button ( L"test button" ) )
+								MessageBoxA ( 0, 0, 0, 0 );
 
-					sesui::render();
-					sesui::end_frame();
+							sesui::end_group ( );
+						}
+
+						if ( sesui::begin_group ( L"group 2", sesui::rect ( 0.5f, 0.0f, 0.5f, 1.0f ), sesui::rect ( sesui::style.spacing * 0.5f, 0.0f, -sesui::style.spacing * 0.5f, 0.0f ) ) ) {
+							sesui::checkbox ( L"onii", test_checkbox1 );
+							sesui::checkbox ( L"is", test_checkbox2 );
+							sesui::checkbox ( L"a", test_checkbox3 );
+							sesui::checkbox ( L"fucking", test_checkbox4 );
+							sesui::checkbox ( L"hoe", test_checkbox5 );
+							sesui::tooltip ( L"Scales GUI appropriately" );
+							sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
+							sesui::tooltip ( L"Percentage slider thingy" );
+							sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
+							sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
+							sesui::tooltip ( L"Angle (degree) slider" );
+							sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
+							sesui::combobox ( L"combobox test", test_combobox, { L"one", L"two", L"three", L"four", L"five" } );
+							sesui::multiselect ( L"multiselect test", { { L"one", test_multiselect1 }, { L"two", test_multiselect2 }, { L"three", test_multiselect3 }, { L"four", test_multiselect4 }, { L"five", test_multiselect5 }, { L"six", test_multiselect6 }, { L"seven", test_multiselect7 } } );
+
+							if ( sesui::button ( L"test button" ) )
+								MessageBoxA ( 0, 0, 0, 0 );
+
+							sesui::end_group ( );
+						}
+						break;
+					case 1:
+						break;
+					case 2:
+						break;
+					case 3:
+						break;
+					case 4:
+						break;
+					case 5:
+						break;
+					case 6:
+						break;
+					case 7:
+						break;
+					}
+
+					sesui::end_window ( );
 				}
+
+				sesui::render ( );
+				sesui::end_frame ( );
 
 
 			/* save current frametime */
 			const auto ms = std::chrono::duration_cast< std::chrono::milliseconds >( std::chrono::system_clock::now ( ).time_since_epoch ( ) ).count ( );
 			const auto delta_ms = ms - last_render_ms;
-			render::frametime = static_cast< float > ( delta_ms ) / 1000.0f;
+			
+			if ( delta_ms < 10000 )
+				render::frametime = static_cast< float > ( delta_ms ) / 1000.0f;
+
 			last_render_ms = ms;
 
 			g_pd3dDevice->EndScene ( );
@@ -216,6 +285,9 @@ LRESULT WINAPI WndProc ( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam ) {
 		break;
 	case WM_DESTROY:
 		::PostQuitMessage ( 0 );
+		return 0;
+	case WM_MOUSEWHEEL:
+		sesui::input::scroll_amount += static_cast< float > ( GET_WHEEL_DELTA_WPARAM ( wParam ) ) / static_cast< float > ( WHEEL_DELTA );
 		return 0;
 	}
 

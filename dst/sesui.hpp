@@ -14,7 +14,7 @@
 #define SESUI_API __declspec( dllexport )
 
 /* do not modify */
-#define SESUI_VER "0.3.0"
+#define SESUI_VER "0.0.1"
 
 namespace sesui {
 	namespace globals {
@@ -231,14 +231,6 @@ namespace sesui {
 		}
 	};
 
-	enum window_flags : uint32_t {
-		none = ( 1 << 0 ),
-		no_resize = ( 1 << 1 ),
-		no_move = ( 1 << 2 ),
-		no_title = ( 1 << 3 ),
-		no_closebutton = ( 1 << 4 )
-	};
-
 	using layer = uint8_t;
 
 	enum class layer_constants : layer {
@@ -250,15 +242,8 @@ namespace sesui {
 		extern std::array< bool, 256 > old_key_state;
 		extern vec2 start_click_pos;
 		extern vec2 mouse_pos;
-		extern bool enabled;
-		extern bool queue_enable;
-		extern float scroll_amount;
 
 		/* call before any drawing is handled to gather input */
-		SESUI_API void enable_input ( bool enabled );
-
-		SESUI_API void get_scroll_amount ( const float scroll_amount );
-
 		SESUI_API void get_input ( const ses_string& window );
 
 		SESUI_API bool key_pressed ( int key );
@@ -267,48 +252,28 @@ namespace sesui {
 
 		SESUI_API bool key_released ( int key );
 
-		SESUI_API bool in_clip ( const vec2& pos );
+		SESUI_API bool mouse_in_region ( const rect& bounds );
 
-		SESUI_API bool mouse_in_region ( const rect& bounds, bool force = false );
-
-		SESUI_API bool click_in_region ( const rect& bounds, bool force = false );
+		SESUI_API bool click_in_region ( const rect& bounds );
 	}
 
 	namespace globals {
-		struct group_ctx_t {
-			float calc_height = 0.0f;
-			float scroll_amount = 0.0f;
-			float scroll_amount_target = 0.0f;
-		};
-
 		struct window_ctx_t {
 			rect bounds;
 			layer layer;
 			bool moving;
-			bool resizing;
 			vec2 click_offset;
+			vec2 cursor;
 			std::array< float, 256 > anim_time;
 			std::array< float, 256 > hover_time;
 			std::basic_string < ses_char > selected_tooltip;
 			std::basic_string < ses_char > tooltip;
-			std::vector< vec2 > cursor_stack;
-			std::map< std::basic_string < ses_char >, group_ctx_t > group_ctx;
-			rect main_area;
-			float last_cursor_offset = 0.0f;
 			float tooltip_anim_time = 0.0f;
-			float tab_width = 0.0f;
-			float selected_tab_offset = 0.0f;
-			int tab_count;
 			int cur_index;
-			int cur_tab_index;
-			bool same_line = false;
-			std::basic_string < ses_char > cur_group;
 		};
 
-		extern rect clip;
-		extern bool clip_enabled;
-		extern std::map< std::basic_string< ses_char >, window_ctx_t > window_ctx;
-		extern std::basic_string< ses_char > cur_window;
+		extern std::map< std::basic_string_view< ses_char >, window_ctx_t > window_ctx;
+		extern ses_string cur_window;
 	}
 
 	struct style_t {
@@ -318,25 +283,19 @@ namespace sesui {
 		color window_accent = color ( 255, 0, 77, 255 );
 		color window_accent_borders = color ( 255, 0 + 125, 77 + 125, 255 );
 
-		vec2 window_min_size = vec2 ( 300.0f, 300.0f );
-
 		/* percentage */
 		float titlebar_height = 0.1f /* 1/10 */;
-		float group_titlebar_height = 0.05f /* 1/20 */;
 
 		vec2 initial_offset = vec2 ( 22.0f, 22.0f );
 		float spacing = 8.0f;
 		float padding = 6.0f;
-		float resize_grab_radius = 6.0f;
-		float same_line_offset = 100.0f;
-		float scroll_arrow_height = 12.0f;
 
 		float animation_speed = 4.0f;
 
 		/* control colors */
 		color control_background = color ( 66, 70, 77, 255 );
 		color control_borders = color ( 89, 92, 99, 255 );
-		color control_text = color ( 205, 205, 205, 255 );
+		color control_text = color ( 225, 225, 225, 255 );
 		color control_text_hovered = color ( 255, 255, 255, 255 );
 		color control_accent = color ( 255, 0, 77, 255 );
 		color control_accent_borders = color ( 255, 0 + 125, 77 + 125, 255 );
@@ -348,9 +307,6 @@ namespace sesui {
 		/* control stuff */
 		vec2 checkbox_size = vec2( 14.0f, 14.0f );
 		vec2 slider_size = vec2 ( 160.0f, 8.0f );
-		vec2 button_size = vec2 ( 160.0f, 22.0f );
-		vec2 colorpicker_size = vec2 ( 14.0f, 14.0f );
-		vec2 colorpicker_square_size = vec2 ( 200.0f, 200.0f );
 
 		font control_font = font( L"Comfortaa Regular", 16, 400, false );
 	};
@@ -379,6 +335,9 @@ namespace sesui {
 			/* stores type of objects we are trying to draw (all types stored in object_type enum)*/
 			object_type type;
 
+			/* layer to rendor object on (lowere layer will be drawn first) */
+			layer layer;
+
 			/* color applies to both polygons and text */
 			color color;
 
@@ -398,7 +357,7 @@ namespace sesui {
 		};
 
 		/* list of objects to draw*/
-		std::array < std::vector< object_t >, static_cast< int > ( layer_constants::topmost ) > objects { };
+		std::vector< object_t > objects { };
 
 	public:
 		/* mostly geometric primitives */
@@ -447,8 +406,9 @@ namespace sesui {
 				}
 			}
 
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
+			objects.push_back ( object_t {
 				object_type::polygon,
+				topmost ? static_cast < layer > ( layer_constants::topmost ) : globals::window_ctx [ globals::cur_window.get ( ) ].layer,
 				color,
 				{},
 				clip_mode::none,
@@ -472,8 +432,9 @@ namespace sesui {
 				vec2 ( rectangle.x, rectangle.y + scaled_h )
 			};
 
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
+			objects.push_back ( object_t {
 				object_type::polygon,
+				topmost ? static_cast < layer > ( layer_constants::topmost ) : globals::window_ctx [ globals::cur_window.get ( ) ].layer,
 				color,
 				{},
 				clip_mode::none,
@@ -486,67 +447,13 @@ namespace sesui {
 			} );
 		}
 
-		void add_line ( const vec2& p1, const vec2& p2, const color& color, bool topmost = false ) {
-			std::vector< vec2 > verticies {
-				p1,
-				p2
-			};
-
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
-				object_type::polygon,
-				color,
-				{},
-				clip_mode::none,
-				verticies,
-				false,
-				{},
-				{},
-				{},
-				false
-				} );
-		}
-
-		void add_arrow ( const vec2& pos, float size, float rotation, const color& color, bool filled, bool topmost = false ) {
-			const auto scaled_size = scale_dpi ( size );
-
-			const auto ang1 = math::deg2rad ( -90.0f + rotation );
-			const auto ang2 = math::deg2rad ( 90.0f + rotation );
-			const auto ang3 = math::deg2rad ( 0.0f + rotation );
-
-			std::vector< vec2 > verticies;
-
-			if ( !filled ) {
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang2 ) * scaled_size, pos.y - math::sin ( ang2 ) * scaled_size ) );
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang3 ) * scaled_size, pos.y - math::sin ( ang3 ) * scaled_size ) );
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang1 ) * scaled_size, pos.y - math::sin ( ang1 ) * scaled_size ) );
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang3 ) * scaled_size, pos.y - math::sin ( ang3 ) * scaled_size ) );
-			}
-			else {
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang2 ) * scaled_size, pos.y - math::sin ( ang2 ) * scaled_size ) );
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang3 ) * scaled_size, pos.y - math::sin ( ang3 ) * scaled_size ) );
-				verticies.push_back ( vec2 ( pos.x - math::cos ( ang1 ) * scaled_size, pos.y - math::sin ( ang1 ) * scaled_size ) );
-			}
-
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
-				object_type::polygon,
-				color,
-				{},
-				clip_mode::none,
-				verticies,
-				filled,
-				{},
-				{},
-				{},
-				false
-				} );
-		}
-
 		void add_text ( const vec2& pos, const font& font, const ses_string& text, bool text_shadow, const color& color, bool topmost = false ) {
 			if ( !font.data )
 				throw "Attempted to add text using invalid font to draw list.";
 
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
+			objects.push_back ( object_t {
 				object_type::text,
+				topmost ? static_cast < layer > ( layer_constants::topmost ) : globals::window_ctx [ globals::cur_window.get ( ) ].layer,
 				color,
 				{},
 				clip_mode::none,
@@ -559,41 +466,6 @@ namespace sesui {
 			} );
 		}
 
-		void add_clip ( const rect& area, bool topmost = false ) {
-			globals::clip_enabled = true;
-			globals::clip = area;
-
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
-				object_type::clip,
-				color ( 0,0,0,0 ),
-				rect( area.x, area.y, scale_dpi ( area.w ), scale_dpi ( area.h ) ),
-				clip_mode::begin,
-				{},
-				false,
-				{},
-				{ },
-				L"",
-				false
-				} );
-		}
-
-		void remove_clip ( bool topmost = false ) {
-			globals::clip_enabled = false;
-
-			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
-				object_type::clip,
-				color ( 0,0,0,0 ),
-				{},
-				clip_mode::end,
-				{},
-				false,
-				{},
-				{ },
-				L"",
-				false
-				} );
-		}
-
 		void render ( ) {
 			if ( !draw_polygon
 				|| !draw_text
@@ -601,38 +473,40 @@ namespace sesui {
 				|| !get_frametime )
 				throw "One or more of the methods required to render the draw list were undefined.";
 
-			/* organized in layer order */
-			for ( auto& layer : objects ) {
-				if ( layer.empty ( ) )
-					continue;
+			if ( objects.empty ( ) )
+				return;
 
-				/* loop through all objects, sort by layer, and draw all at once */
-				for ( const auto& object : layer ) {
-					switch ( object.type ) {
-					case object_type::polygon:
-						draw_polygon ( object.verticies, object.color, object.filled );
-						break;
-					case object_type::text:
-						if ( !object.font.data )
-							throw "Attempted to draw text using invalid font.";
+			/* sort objects by layer, so we draw object on bottom layers before ones on top */
+			std::sort ( objects.begin ( ), objects.end ( ), [ ] ( const object_t& lhs, const object_t& rhs ) {
+				return lhs.layer < rhs.layer;
+			} );
 
-						if ( object.text_shadow )
-							draw_text ( object.text_pos + vec2 ( 1.0f, 1.0f ), object.font, object.text.data ( ), color ( 0, 0, 0, static_cast< int >( object.color.a ) ) );
+			/* loop through all objects, sort by layer, and draw all at once */
+			for ( const auto& object : objects ) {
+				switch ( object.type ) {
+				case object_type::polygon:
+					draw_polygon ( object.verticies, object.color, object.filled );
+					break;
+				case object_type::text:
+					if ( !object.font.data )
+						throw "Attempted to draw text using invalid font.";
 
-						draw_text ( object.text_pos, object.font, object.text.data ( ), object.color );
-						break;
-					case object_type::clip:
-						if ( object.clip_mode == clip_mode::begin )
-							begin_clip ( object.clip_rect );
-						else if ( object.clip_mode == clip_mode::end )
-							end_clip ( );
-						break;
-					}
+					if ( object.text_shadow )
+						draw_text ( object.text_pos + vec2 ( 1.0f, 1.0f ), object.font, object.text.data ( ), color( 0, 0, 0, static_cast< int >( object.color.a ) ) );
+
+					draw_text ( object.text_pos, object.font, object.text.data(), object.color );
+					break;
+				case object_type::clip:
+					if ( object.clip_mode == clip_mode::begin )
+						begin_clip ( object.clip_rect );
+					else if ( object.clip_mode == clip_mode::end )
+						end_clip ( );
+					break;
 				}
-
-				/* clear draw list after we already rendered all the objects! */
-				layer.clear ( );
 			}
+
+			/* clear draw list after we already rendered all the objects! */
+			objects.clear ( );
 		}
 	};
 
@@ -642,9 +516,6 @@ namespace sesui {
 	/* -- SESUI API FUNCTIONS BELOW -- */
 	/* ------------------------------- */
 
-	/* splits text into 2 parts: 1. label 2. hidden id*/
-	std::pair< std::basic_string< sesui::ses_char >, std::basic_string< sesui::ses_char > > split ( std::basic_string< sesui::ses_char > val );
-
 	/* begins ui frame */
 	SESUI_API void begin_frame ( const ses_string& window );
 
@@ -652,42 +523,20 @@ namespace sesui {
 	SESUI_API void end_frame ( );
 
 	/* creates new window */
-	SESUI_API bool begin_window ( const ses_string& name, const rect& bounds, bool& opened, uint32_t flags = window_flags::none );
+	SESUI_API void begin_window ( const ses_string& title, const rect& bounds );
 
 	SESUI_API void end_window ( );
-
-	SESUI_API void same_line ( );
-
-	/* groups */
-	SESUI_API bool begin_group ( const ses_string& name, const rect& fraction, const rect& extra );
-
-	SESUI_API void end_group ( );
-
-	/* tabs */
-	SESUI_API bool begin_tabs ( int count, float width = 0.2f );
-
-	SESUI_API void tab ( const ses_string& name, int& selected );
-
-	SESUI_API void end_tabs ( );
 
 	/* other gui stuff */
 	SESUI_API void tooltip ( const ses_string& tooltip );
 
 	/* gui controls */
-	SESUI_API void checkbox ( const ses_string& name, bool& option );
+	SESUI_API void checkbox ( const ses_string& title, bool& option );
 
-	SESUI_API bool button ( const ses_string& name );
-
-	SESUI_API void colorpicker ( const ses_string& name, color& option );
-
-	SESUI_API void combobox ( const ses_string& name, int& option, const std::vector< ses_string >& list );
-	
-	SESUI_API void multiselect ( const ses_string& name, const std::vector< std::pair< ses_string, bool& > >& list );
-
-	SESUI_API void slider_ex ( const ses_string& name, float& option, float min, float max, const ses_string& value_str );
+	SESUI_API void slider_ex ( const ses_string& title, float& option, float min, float max, const ses_string& value_str );
 
 	template < typename type >
-	inline void slider ( const ses_string& name, type& option, type min, type max, const ses_string fmt = L"" ) {
+	inline void slider ( const ses_string& title, type& option, type min, type max, const ses_string fmt = L"" ) {
 		ses_string final_fmt = L"%d";
 
 		if constexpr ( std::is_floating_point< type >::value )
@@ -700,7 +549,7 @@ namespace sesui {
 		swprintf_s ( value_str, final_fmt.get ( ), option );
 
 		float tmp = static_cast < float > ( option );
-		slider_ex ( name, tmp, min, max, value_str );
+		slider_ex ( title, tmp, min, max, value_str );
 		option = tmp;
 	}
 

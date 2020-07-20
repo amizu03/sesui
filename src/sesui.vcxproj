@@ -150,8 +150,14 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="d3d9_render.cpp" />
+    <ClCompile Include="sesui\controls\button.cpp" />
     <ClCompile Include="sesui\controls\checkbox.cpp" />
+    <ClCompile Include="sesui\controls\colorpicker.cpp" />
+    <ClCompile Include="sesui\controls\combobox.cpp" />
+    <ClCompile Include="sesui\controls\groupbox.cpp" />
+    <ClCompile Include="sesui\controls\multiselect.cpp" />
     <ClCompile Include="sesui\controls\slider.cpp" />
+    <ClCompile Include="sesui\controls\tabs.cpp" />
     <ClCompile Include="sesui\controls\window.cpp" />
     <ClCompile Include="sesui\fonts.cpp" />
     <ClCompile Include="sesui\frame.cpp" />
