@@ -142,19 +142,24 @@ int main ( ) {
 						if ( sesui::begin_group ( L"group 1", sesui::rect ( 0.0f, 0.0f, 0.5f, 1.0f ), sesui::rect( 0.0f, 0.0f, -sesui::style.spacing * 0.5f, 0.0f ) ) ) {
 							sesui::checkbox ( L"onii", test_checkbox1 );
 							sesui::checkbox ( L"is", test_checkbox2 );
-							sesui::checkbox ( L"a", test_checkbox3 );
-							sesui::checkbox ( L"fucking", test_checkbox4 );
-							sesui::checkbox ( L"hoe", test_checkbox5 );
+							
 							sesui::tooltip ( L"Scales GUI appropriately" );
 							sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
 							sesui::tooltip ( L"Percentage slider thingy" );
+							sesui::checkbox ( L"a", test_checkbox3 );
+							sesui::checkbox ( L"fucking", test_checkbox4 );
+							sesui::checkbox ( L"hoe", test_checkbox5 );
+
+							sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
+							sesui::tooltip ( L"Angle (degree) slider" );
 							sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
+							sesui::checkbox ( L"a", test_checkbox3 );
+							sesui::checkbox ( L"fucking", test_checkbox4 );
+							sesui::checkbox ( L"hoe", test_checkbox5 );
+
 							sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
 							sesui::tooltip ( L"Angle (degree) slider" );
 							sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
-							sesui::combobox ( L"combobox test", test_combobox, { L"one", L"two", L"three", L"four", L"five" } );
-							sesui::multiselect ( L"multiselect test", { { L"one", test_multiselect1 }, { L"two", test_multiselect2 }, { L"three", test_multiselect3 }, { L"four", test_multiselect4 }, { L"five", test_multiselect5 }, { L"six", test_multiselect6 }, { L"seven", test_multiselect7 } } );
-
 							if ( sesui::button ( L"test button" ) )
 								MessageBoxA ( 0, 0, 0, 0 );
 
@@ -162,22 +167,24 @@ int main ( ) {
 						}
 
 						if ( sesui::begin_group ( L"group 2", sesui::rect ( 0.5f, 0.0f, 0.5f, 1.0f ), sesui::rect ( sesui::style.spacing * 0.5f, 0.0f, -sesui::style.spacing * 0.5f, 0.0f ) ) ) {
-							sesui::checkbox ( L"onii", test_checkbox1 );
-							sesui::checkbox ( L"is", test_checkbox2 );
 							sesui::checkbox ( L"a", test_checkbox3 );
 							sesui::checkbox ( L"fucking", test_checkbox4 );
 							sesui::checkbox ( L"hoe", test_checkbox5 );
-							sesui::tooltip ( L"Scales GUI appropriately" );
-							sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
-							sesui::tooltip ( L"Percentage slider thingy" );
-							sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
+
 							sesui::slider ( L"double slider", test_double_slider, 0.0, 100.0 );
 							sesui::tooltip ( L"Angle (degree) slider" );
 							sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
 							sesui::combobox ( L"combobox test", test_combobox, { L"one", L"two", L"three", L"four", L"five" } );
 							sesui::multiselect ( L"multiselect test", { { L"one", test_multiselect1 }, { L"two", test_multiselect2 }, { L"three", test_multiselect3 }, { L"four", test_multiselect4 }, { L"five", test_multiselect5 }, { L"six", test_multiselect6 }, { L"seven", test_multiselect7 } } );
 
-							if ( sesui::button ( L"test button" ) )
+							sesui::tooltip ( L"Scales GUI appropriately" );
+							sesui::slider ( L"GUI DPI", sesui::globals::dpi, 0.5f, 3.0f );
+							sesui::tooltip ( L"Percentage slider thingy" );
+							sesui::slider ( L"float slider", test_float_slider, -180.0f, 180.0f, L"%.2f%%" );
+							sesui::checkbox ( L"a", test_checkbox3 );
+							sesui::checkbox ( L"fucking", test_checkbox4 );
+							sesui::checkbox ( L"hoe", test_checkbox5 );
+							if ( sesui::button ( L"test button 1" ) )
 								MessageBoxA ( 0, 0, 0, 0 );
 
 							sesui::end_group ( );

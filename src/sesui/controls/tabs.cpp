@@ -69,9 +69,9 @@ void sesui::tab ( const ses_string& name, int& selected ) {
 		const auto delta = std::fabsf( ( text_pos - window_rect.y ) - window->second.selected_tab_offset );
 
 		if ( window->second.selected_tab_offset < text_pos - window_rect.y )
-			window->second.selected_tab_offset += delta * style.animation_speed * draw_list.get_frametime ( );
+			window->second.selected_tab_offset += delta * style.animation_speed * 3.0f * draw_list.get_frametime ( );
 		else
-			window->second.selected_tab_offset -= delta * style.animation_speed * draw_list.get_frametime ( );
+			window->second.selected_tab_offset -= delta * style.animation_speed * 3.0f * draw_list.get_frametime ( );
 	}
 
 	draw_list.add_text ( vec2 ( window_rect.x + scale_dpi ( tab_dim.x ) / 2.0f - text_size.x / 2.0f, text_pos - text_size.y / 2.0f ), style.control_font, title, true, style.control_text );

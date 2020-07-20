@@ -359,6 +359,7 @@ namespace sesui {
 
 	namespace fonts {
 		extern std::array< uint8_t, 140136 > font_default;
+		extern std::array< uint8_t, 5208 > font_codeine;
 	}
 
 	/* draw list object, keeps all polygons and text that will need to be drawn by the ui framework */
