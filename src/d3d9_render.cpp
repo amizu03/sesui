@@ -33,7 +33,7 @@ void render::polygon ( const std::vector< sesui::vec2 >& verticies, const sesui:
 	for ( auto i = 0; i < verticies.size ( ); i++ ) {
 		vtx[i].x = verticies [ i ].x;
 		vtx[i].y = verticies [ i ].y;
-		vtx [ i ].color = D3DCOLOR_RGBA ( color.r, color.g, color.b, color.a );
+		vtx [ i ].color = D3DCOLOR_RGBA ( static_cast< int >( color.r * 255.0f ), static_cast< int >( color.g * 255.0f ), static_cast< int >( color.b * 255.0f ), static_cast< int >( color.a * 255.0f ) );
 		vtx[i].z = 0.0f;
 		vtx[i].rhw = 1.0f;
 	}
@@ -50,13 +50,36 @@ void render::polygon ( const std::vector< sesui::vec2 >& verticies, const sesui:
 	delete [ ] vtx;
 }
 
+void render::multicolor_polygon ( const std::vector< sesui::vec2 >& verticies, const std::vector< sesui::color >& colors, bool filled ) noexcept {
+	vertex_t* vtx = new vertex_t [ filled ? verticies.size ( ) : ( verticies.size ( ) + 1 ) ];
+
+	for ( auto i = 0; i < verticies.size ( ); i++ ) {
+		vtx [ i ].x = verticies [ i ].x;
+		vtx [ i ].y = verticies [ i ].y;
+		vtx [ i ].color = D3DCOLOR_RGBA ( static_cast< int >( colors [ i ].r * 255.0f ), static_cast< int >( colors [ i ].g * 255.0f ), static_cast< int >( colors [ i ].b * 255.0f ), static_cast< int >( colors [ i ].a * 255.0f ) );
+		vtx [ i ].z = 0.0f;
+		vtx [ i ].rhw = 1.0f;
+	}
+
+	if ( !filled ) {
+		vtx [ verticies.size ( ) ] = vtx [ 0 ];
+	}
+
+	device->SetRenderState ( D3DRS_ALPHABLENDENABLE, true );
+	device->SetFVF ( D3DFVF_XYZRHW | D3DFVF_DIFFUSE );
+	device->SetTexture ( 0, nullptr );
+	device->DrawPrimitiveUP ( filled ? D3DPT_TRIANGLEFAN : D3DPT_LINESTRIP, filled ? verticies.size ( ) - 2 : verticies.size ( ), vtx, sizeof ( vertex_t ) );
+
+	delete [ ] vtx;
+}
+
 void render::text ( const sesui::vec2& pos, const sesui::font& font, const sesui::ses_string& text, const sesui::color& color ) noexcept {
 	if ( !font.data )
 		return;
 
 	RECT rect;
 	SetRect ( &rect, pos.x, pos.y, pos.x, pos.y );
-	reinterpret_cast< ID3DXFont* >( font.data )->DrawTextW ( nullptr, text.get ( ), text.len ( ), &rect, DT_LEFT | DT_NOCLIP, D3DCOLOR_RGBA ( color.r, color.g, color.b, color.a ) );
+	reinterpret_cast< ID3DXFont* >( font.data )->DrawTextW ( nullptr, text.get ( ), text.len ( ), &rect, DT_LEFT | DT_NOCLIP, D3DCOLOR_RGBA ( static_cast< int >( color.r * 255.0f ), static_cast< int >( color.g * 255.0f ), static_cast< int >( color.b * 255.0f ), static_cast< int >( color.a * 255.0f ) ) );
 }
 
 void render::get_text_size ( const sesui::font& font, const sesui::ses_string& text, sesui::vec2& dim_out ) noexcept {

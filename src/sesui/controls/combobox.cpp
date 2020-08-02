@@ -12,7 +12,7 @@ void sesui::combobox ( const ses_string& name, int& option, const std::vector< s
 	if ( option > list.size( ) - 1 )
 		throw "Selected option is outside of list bounds.";
 	
-	const auto same_line_backup_x = window->second.cursor_stack.back ( ).x;
+	const auto same_line_backup = window->second.cursor_stack.back ( );
 
 	if ( window->second.same_line ) {
 		window->second.cursor_stack.back ( ).y -= window->second.last_cursor_offset;
@@ -86,13 +86,16 @@ void sesui::combobox ( const ses_string& name, int& option, const std::vector< s
 		draw_list.add_text ( vec2 ( check_rect.x + scale_dpi ( style.button_size.x ) * 0.5f - text_size.x * 0.5f, check_rect.y + scale_dpi ( style.button_size.y ) * 0.5f - text_size.y * 0.5f ), style.control_font, list [ option ], false, style.control_text.lerp ( style.control_text_hovered, window->second.anim_time [ window->second.cur_index + 1 ] ) );
 		draw_list.add_arrow ( vec2 ( check_rect.x + scale_dpi ( style.button_size.x - style.padding - ( ( 1.0f - window->second.anim_time [ window->second.cur_index + 3 ] ) * 4.0f ) ), check_rect.y + scale_dpi ( style.button_size.y ) * 0.5f - ( ( 1.0f - window->second.anim_time [ window->second.cur_index + 3 ] ) * 4.0f ) * 0.5f ), 4.0f, -90.0f + window->second.anim_time [ window->second.cur_index + 3 ] * 90.0f, style.control_text, false );
 	}
-	
+
+	const auto backup_clip_enabled = globals::clip_enabled;
+	globals::clip_enabled = false;
+
 	if ( should_draw && window->second.anim_time [ window->second.cur_index + 3 ] > 0.0f ) {
 		const auto calculated_height = style.button_size.y * list.size ( );
 		const auto list_rect = rect ( window->second.cursor_stack.back ( ).x, window->second.cursor_stack.back ( ).y + text_size.y + scale_dpi ( style.button_size.y + style.padding + style.padding ), style.button_size.x, calculated_height * window->second.anim_time [ window->second.cur_index + 3 ] );
 
-		draw_list.add_rounded_rect ( list_rect, style.control_rounding, color ( style.control_background.r, style.control_background.g, style.control_background.b, static_cast< uint8_t > ( 0 ) ).lerp( style.control_background, window->second.anim_time [ window->second.cur_index + 3 ] ), true, true );
-		draw_list.add_rounded_rect ( list_rect, style.control_rounding, color ( style.control_borders.r, style.control_borders.g, style.control_borders.b, static_cast< uint8_t > ( 0 ) ).lerp ( style.control_borders, window->second.anim_time [ window->second.cur_index + 3 ] ), false, true );
+		draw_list.add_rounded_rect ( list_rect, style.control_rounding, color ( style.control_background.r, style.control_background.g, style.control_background.b, 0.0f ).lerp( style.control_background, window->second.anim_time [ window->second.cur_index + 3 ] ), true, true );
+		draw_list.add_rounded_rect ( list_rect, style.control_rounding, color ( style.control_borders.r, style.control_borders.g, style.control_borders.b, 0.0f ).lerp ( style.control_borders, window->second.anim_time [ window->second.cur_index + 3 ] ), false, true );
 
 		for ( auto i = 0; i < list.size ( ); i++ ) {
 			vec2 text_size;
@@ -116,9 +119,11 @@ void sesui::combobox ( const ses_string& name, int& option, const std::vector< s
 			if ( list_rect.y + scale_dpi( style.button_size.y * 0.5f + i * style.button_size.y ) + text_size.y * 0.5f > list_rect.y + scale_dpi( list_rect.h ) )
 				break;
 
-			draw_list.add_text ( vec2 ( window->second.cursor_stack.back ( ).x + scale_dpi( style.padding ), list_rect.y + scale_dpi( style.button_size.y * 0.5f + i * style.button_size.y ) - text_size.y * 0.5f ), style.control_font, list [ i ], true, color ( lerped_color.r, lerped_color.g, lerped_color.b, static_cast< uint8_t > ( 0 ) ).lerp ( lerped_color, window->second.anim_time [ window->second.cur_index + 3 ] ), true );
+			draw_list.add_text ( vec2 ( window->second.cursor_stack.back ( ).x + scale_dpi( style.padding ), list_rect.y + scale_dpi( style.button_size.y * 0.5f + i * style.button_size.y ) - text_size.y * 0.5f ), style.control_font, list [ i ], true, color ( lerped_color.r, lerped_color.g, lerped_color.b, 0.0f ).lerp ( lerped_color, window->second.anim_time [ window->second.cur_index + 3 ] ), true );
 		}
 	}
+
+	globals::clip_enabled = backup_clip_enabled;
 
 	window->second.last_cursor_offset = text_size.y + scale_dpi ( style.button_size.y + style.spacing + style.padding );
 	window->second.cursor_stack.back ( ).y += window->second.last_cursor_offset;
@@ -126,7 +131,7 @@ void sesui::combobox ( const ses_string& name, int& option, const std::vector< s
 	window->second.tooltip.clear ( );
 
 	if ( window->second.same_line ) {
-		window->second.cursor_stack.back ( ).x = same_line_backup_x;
+		window->second.cursor_stack.back ( ) = same_line_backup;
 		window->second.same_line = false;
 	}
 }

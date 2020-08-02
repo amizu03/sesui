@@ -9,7 +9,7 @@ void sesui::slider_ex ( const ses_string& name, float& option, float min, float 
 	if ( window == globals::window_ctx.end ( ) )
 		throw "Current window context not valid.";
 
-	const auto same_line_backup_x = window->second.cursor_stack.back ( ).x;
+	const auto same_line_backup = window->second.cursor_stack.back ( );
 
 	if ( window->second.same_line ) {
 		window->second.cursor_stack.back ( ).y -= window->second.last_cursor_offset;
@@ -93,7 +93,7 @@ void sesui::slider_ex ( const ses_string& name, float& option, float min, float 
 	window->second.tooltip.clear ( );
 
 	if ( window->second.same_line ) {
-		window->second.cursor_stack.back ( ).x = same_line_backup_x;
+		window->second.cursor_stack.back ( ) = same_line_backup;
 		window->second.same_line = false;
 	}
 }

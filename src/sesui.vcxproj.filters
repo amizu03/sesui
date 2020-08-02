@@ -17,6 +17,8 @@
     <ClCompile Include="sesui\controls\multiselect.cpp" />
     <ClCompile Include="sesui\controls\colorpicker.cpp" />
     <ClCompile Include="sesui\controls\groupbox.cpp" />
+    <ClCompile Include="sesui\controls\keybind.cpp" />
+    <ClCompile Include="sesui\controls\textbox.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sesui\sesui.hpp" />

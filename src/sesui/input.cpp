@@ -39,7 +39,7 @@ void sesui::input::get_input ( const ses_string& window ) {
 
 	mouse_pos = { pos.x, pos.y };
 
-	if ( key_pressed ( VK_LBUTTON ) )
+	if ( key_state [ VK_LBUTTON ] && !old_key_state [ VK_LBUTTON ] )
 		start_click_pos = { pos.x, pos.y };
 }
 

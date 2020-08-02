@@ -15,7 +15,7 @@ bool sesui::begin_group ( const ses_string& name, const rect& fraction, const re
 
 	window->second.cur_group = parts.first + id;
 
-	const auto same_line_backup_x = window->second.cursor_stack.back ( ).x;
+	const auto same_line_backup = window->second.cursor_stack.back ( );
 
 	if ( window->second.same_line ) {
 		window->second.cursor_stack.back ( ).y -= window->second.last_cursor_offset;
@@ -62,7 +62,7 @@ bool sesui::begin_group ( const ses_string& name, const rect& fraction, const re
 
 	vec2 text_size;
 	draw_list.get_text_size ( style.control_font, title, text_size );
-	draw_list.add_text ( vec2 ( bounds.x + scale_dpi ( bounds.w ) * 0.5f - text_size.x * 0.5f, bounds.y + scale_dpi ( titlebar_rect.h - 6.0f ) * 0.5f - text_size.y * 0.5f ), style.control_font, title, true, color ( 200, 200, 200, 255 ) );
+	draw_list.add_text ( vec2 ( bounds.x + scale_dpi ( bounds.w ) * 0.5f - text_size.x * 0.5f, bounds.y + scale_dpi ( titlebar_rect.h - 6.0f ) * 0.5f - text_size.y * 0.5f ), style.control_font, title, true, color ( 0.78f, 0.78f, 0.78f, 1.0f ) );
 
 	//window->second.cursor_stack.back ( ).x += window->second.main_area.w * fraction.w + style.spacing;
 	//window->second.last_cursor_offset = window->second.main_area.h * fraction.h + style.spacing;
@@ -72,7 +72,7 @@ bool sesui::begin_group ( const ses_string& name, const rect& fraction, const re
 	window->second.cursor_stack.push_back ( vec2 ( bounds.x + scale_dpi ( style.initial_offset.x ), bounds.y + scale_dpi ( titlebar_rect.h + style.initial_offset.y - window->second.group_ctx [ window->second.cur_group ].scroll_amount ) ) );
 
 	if ( window->second.same_line ) {
-		window->second.cursor_stack.back ( ).x = same_line_backup_x;
+		window->second.cursor_stack.back ( ) = same_line_backup;
 		window->second.same_line = false;
 	}
 
@@ -85,7 +85,7 @@ bool sesui::begin_group ( const ses_string& name, const rect& fraction, const re
 	const auto thumb_space = scale_dpi ( clip_area.h ) - thumb_height;
 	const auto scroll_jump = track_space / thumb_space;
 
-	draw_list.add_rect ( rect ( clip_area.x + scale_dpi ( clip_area.w ) - 2.0f, clip_area.y, unscale_dpi ( 2.0f ), clip_area.h ), color( 0, 0, 0, 50 ), true );
+	draw_list.add_rect ( rect ( clip_area.x + scale_dpi ( clip_area.w ) - 2.0f, clip_area.y, unscale_dpi ( 2.0f ), clip_area.h ), color( 0.0f, 0.0f, 0.0f, 0.2f ), true );
 	draw_list.add_rect ( rect( clip_area.x + scale_dpi( clip_area.w ) - 2.0f, clip_area.y + percentage_scrolled * ( scale_dpi ( clip_area.h ) - thumb_height ), unscale_dpi( 2.0f ), unscale_dpi( thumb_height )), style.control_accent, true );
 
 	draw_list.add_clip ( clip_area );

@@ -25,6 +25,7 @@ int main ( ) {
 
 	/* bind draw list methods to our own drawing functions */
 	sesui::draw_list.draw_polygon = render::polygon;
+	sesui::draw_list.draw_multicolor_polygon = render::multicolor_polygon;
 	sesui::draw_list.draw_text = render::text;
 	sesui::draw_list.get_text_size = render::get_text_size;
 	sesui::draw_list.get_frametime = render::get_frametime;
@@ -83,6 +84,17 @@ int main ( ) {
 
 	bool opened = true;
 
+	int test_key = 0;
+	int test_key_mode = 0;
+
+	int test_key1 = 0;
+	int test_key_mode1 = 0;
+
+	sesui::color test_colorpicker = sesui::color ( 0.0f, 1.0f, 0.0f, 1.0f );
+	sesui::color test_colorpicker1 = sesui::color( 1.0, 0.25f, 0.0f, 1.0f );
+
+	std::wstring test_string = L"test";
+
 	/* gui data for testing */
 	while ( msg.message != WM_QUIT ) {
 		if ( ::PeekMessageA ( &msg, nullptr, 0U, 0U, PM_REMOVE ) ) {
@@ -124,7 +136,7 @@ int main ( ) {
 
 				sesui::begin_frame(L"SESUI Test Window");
 
-				if( sesui::begin_window ( L"SESUI Test Window", sesui::rect ( 200, 200, 600, 500 ), opened, sesui::window_flags::no_closebutton )) {
+				if( sesui::begin_window ( L"SESUI Test Window", sesui::rect ( 200, 200, 800, 600 ), opened, sesui::window_flags::no_closebutton )) {
 					if ( sesui::begin_tabs ( 8 ) ) {
 						sesui::tab ( L"rage", test_tab_index );
 						sesui::tab ( L"antiaim", test_tab_index );
@@ -162,6 +174,16 @@ int main ( ) {
 							sesui::slider ( L"int slider", test_int_slider, 0, 360, L"%d deg" );
 							if ( sesui::button ( L"test button" ) )
 								MessageBoxA ( 0, 0, 0, 0 );
+
+							sesui::checkbox ( L"Third Person", test_checkbox5 );
+							sesui::same_line ( );
+							sesui::keybind ( L"Test Keybind", test_key, test_key_mode );
+							
+							sesui::keybind ( L"Test Keybind 1", test_key1, test_key_mode1 );
+							sesui::colorpicker ( L"Test Colorpicker", test_colorpicker );
+							sesui::colorpicker ( L"Test Colorpicker 1", test_colorpicker1 );
+
+							sesui::textbox ( L"Test Textbox", test_string );
 
 							sesui::end_group ( );
 						}

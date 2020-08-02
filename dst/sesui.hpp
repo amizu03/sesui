@@ -315,8 +315,8 @@ namespace sesui {
 		color window_background = color ( 45, 50, 56, 255 );
 		color window_foreground = color ( 66, 70, 77, 255 );
 		color window_borders = color ( 89, 92, 99, 255 );
-		color window_accent = color ( 255, 0, 77, 255 );
-		color window_accent_borders = color ( 255, 0 + 125, 77 + 125, 255 );
+		color window_accent = color ( 0xda, 0x00, 0x62, 255 );
+		color window_accent_borders = color ( 0xda + 12, 0x00 + 12, 0x62 + 12, 255 );
 
 		vec2 window_min_size = vec2 ( 300.0f, 300.0f );
 
@@ -336,10 +336,11 @@ namespace sesui {
 		/* control colors */
 		color control_background = color ( 66, 70, 77, 255 );
 		color control_borders = color ( 89, 92, 99, 255 );
-		color control_text = color ( 205, 205, 205, 255 );
+		color control_text = color ( 180, 180, 180, 255 );
 		color control_text_hovered = color ( 255, 255, 255, 255 );
-		color control_accent = color ( 255, 0, 77, 255 );
-		color control_accent_borders = color ( 255, 0 + 125, 77 + 125, 255 );
+		color control_accent = color ( 0xda, 0x00, 0x62, 255 );
+		color control_accent_borders = color ( 0xda + 12, 0x00 + 12, 0x62 + 12, 255 );
+		color tab_selected = color ( 0xda + 12, 0x00 + 12, 0x62 + 12, 255 );
 
 		float rounding = 4.0f;
 		float control_rounding = 4.0f;
@@ -359,6 +360,7 @@ namespace sesui {
 
 	namespace fonts {
 		extern std::array< uint8_t, 140136 > font_default;
+		extern std::array< uint8_t, 5208 > font_codeine;
 	}
 
 	/* draw list object, keeps all polygons and text that will need to be drawn by the ui framework */

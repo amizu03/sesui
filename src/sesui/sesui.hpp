@@ -33,28 +33,6 @@ namespace sesui {
 	/* constants */
 	constexpr auto pi = 3.14159265358979f;
 
-	namespace math {
-		template < typename type >
-		constexpr type rad2deg ( type rad ) {
-			return rad * ( 180.0f / pi );
-		}
-
-		template < typename type >
-		constexpr type deg2rad ( type deg ) {
-			return deg * ( pi / 180.0f );
-		}
-
-		template < typename type >
-		constexpr type sin ( type x ) {
-			return std::sinf ( x );
-		}
-
-		template < typename type >
-		constexpr type cos ( type x ) {
-			return std::cosf ( x );
-		}
-	}
-
 	/* ----------------------------- */
 	/* -- SESUI DEFINITIONS BELOW -- */
 	/* ----------------------------- */
@@ -68,14 +46,6 @@ namespace sesui {
 
 	public:
 		/* create string using the new string type we made (this is so we don't have to change the string type everywhere depending on what format we chose) */
-		ses_string ( const char* data ) {
-			str = reinterpret_cast< const ses_char* > ( data );
-		}
-
-		ses_string ( char* data ) {
-			str = reinterpret_cast< ses_char* > ( data );
-		}
-
 		ses_string ( const wchar_t* data ) {
 			str = reinterpret_cast< const ses_char* > ( data );
 		}
@@ -85,7 +55,7 @@ namespace sesui {
 		}
 
 		ses_string ( ) {
-			*this = ses_string ( "" );
+			*this = ses_string ( L"" );
 		}
 
 		auto get ( ) const {
@@ -173,23 +143,20 @@ namespace sesui {
 
 	/* color type capable of storing *most* colors that we would ever need */
 	struct color {
-		uint8_t r, g, b, a;
+		float r, g, b, a;
 
-		template < typename type >
-		color ( type r, type g, type b, type a ) {
-			/* if they input color as floating points, they are most likely using floating point representations of colors (0 to 1) */
-			if constexpr ( std::is_floating_point< type >::value ) {
-				this->r = static_cast< uint8_t > ( r * 255.0f );
-				this->g = static_cast< uint8_t > ( g * 255.0f );
-				this->b = static_cast< uint8_t > ( b * 255.0f );
-				this->a = static_cast< uint8_t > ( a * 255.0f );
-				return;
-			}
+		color ( float r, float g, float b, float a ) {
+			this->r = r;
+			this->g = g;
+			this->b = b;
+			this->a = a;
+		}
 
-			this->r = static_cast< uint8_t > ( r );
-			this->g = static_cast< uint8_t > ( g );
-			this->b = static_cast< uint8_t > ( b );
-			this->a = static_cast< uint8_t > ( a );
+		color ( ) {
+			this->r = 0.0f;
+			this->g = 0.0f;
+			this->b = 0.0f;
+			this->a = 0.0f;
 		}
 
 		color& operator=( const color& other ) {
@@ -204,11 +171,76 @@ namespace sesui {
 			const auto clamped_fraction = std::clamp < float > ( fraction, 0.0f, 1.0f );
 
 			return color (
-				static_cast< int > ( static_cast< float >( to.r - r ) * clamped_fraction + static_cast< float >( r ) ),
-				static_cast< int > ( static_cast< float >( to.g - g ) * clamped_fraction + static_cast< float >( g ) ),
-				static_cast< int > ( static_cast< float >( to.b - b ) * clamped_fraction + static_cast< float >( b ) ),
-				static_cast< int > ( static_cast< float >( to.a - a ) * clamped_fraction + static_cast< float >( a ) )
+				( to.r - r ) * clamped_fraction + r,
+				( to.g - g ) * clamped_fraction + g,
+				( to.b - b ) * clamped_fraction + b,
+				( to.a - a ) * clamped_fraction + a
 			);
+		}
+
+		color to_rgb ( ) {
+			const auto h = this->r * 180.0f * 2.0f;
+			const auto s = this->g;
+			const auto v = this->b;
+
+			auto r = 0.0f, g = 0.0f, b = 0.0f;
+
+			const auto hi = static_cast < int > ( h / 60.0f ) % 6;
+			const auto f = ( h / 60.0f ) - hi;
+			const auto p = v * ( 1.0f - s );
+			const auto q = v * ( 1.0f - s * f );
+			const auto t = v * ( 1.0f - s * ( 1.0f - f ) );
+
+			switch ( hi ) {
+			case 0: r = v, g = t, b = p; break;
+			case 1: r = q, g = v, b = p; break;
+			case 2: r = p, g = v, b = t; break;
+			case 3: r = p, g = q, b = v; break;
+			case 4: r = t, g = p, b = v; break;
+			case 5: r = v, g = p, b = q; break;
+			}
+
+			return color ( r, g, b, this->a );
+		}
+
+		color to_hsv ( ) {
+			const auto r = this->r;
+			const auto g = this->g;
+			const auto b = this->b;
+
+			auto h = 0.0f, s = 0.0f, v = 0.0f;
+
+			const auto max = std::max < float > ( r, std::max < float > ( g, b ) );
+			const auto min = std::min < float > ( r, std::min < float > ( g, b ) );
+
+			v = max;
+
+			if ( max == 0.0f ) {
+				s = 0.0f;
+				h = 0.0f;
+			}
+			else if ( max - min == 0.0f ) {
+				s = 0.0f;
+				h = 0.0f;
+			}
+			else {
+				s = ( max - min ) / max;
+
+				if ( max == r ) {
+					h = 60.0f * ( ( g - b ) / ( max - min ) ) + 0.0f;
+				}
+				else if ( max == g ) {
+					h = 60.0f * ( ( b - r ) / ( max - min ) ) + 120.0f;
+				}
+				else {
+					h = 60.0f * ( ( r - g ) / ( max - min ) ) + 240.0f;
+				}
+			}
+
+			if ( h < 0.0f )
+				h += 360.0f;
+
+			return color ( h / 2.0f / 180.0f, s, v, this->a );
 		}
 	};
 
@@ -230,6 +262,28 @@ namespace sesui {
 
 		}
 	};
+
+	namespace math {
+		template < typename type >
+		constexpr type rad2deg ( type rad ) {
+			return rad * ( 180.0f / pi );
+		}
+
+		template < typename type >
+		constexpr type deg2rad ( type deg ) {
+			return deg * ( pi / 180.0f );
+		}
+
+		template < typename type >
+		constexpr type sin ( type x ) {
+			return std::sinf ( x );
+		}
+
+		template < typename type >
+		constexpr type cos ( type x ) {
+			return std::cosf ( x );
+		}
+	}
 
 	enum window_flags : uint32_t {
 		none = ( 1 << 0 ),
@@ -287,8 +341,8 @@ namespace sesui {
 			bool moving;
 			bool resizing;
 			vec2 click_offset;
-			std::array< float, 256 > anim_time;
-			std::array< float, 256 > hover_time;
+			std::array< float, 512 > anim_time;
+			std::array< float, 512 > hover_time;
 			std::basic_string < ses_char > selected_tooltip;
 			std::basic_string < ses_char > tooltip;
 			std::vector< vec2 > cursor_stack;
@@ -312,11 +366,11 @@ namespace sesui {
 	}
 
 	struct style_t {
-		color window_background = color ( 45, 50, 56, 255 );
-		color window_foreground = color ( 66, 70, 77, 255 );
-		color window_borders = color ( 89, 92, 99, 255 );
-		color window_accent = color ( 0xda, 0x00, 0x62, 255 );
-		color window_accent_borders = color ( 0xda + 12, 0x00 + 12, 0x62 + 12, 255 );
+		color window_background = color ( 0.15f, 0.2f, 0.23f, 1.0f );
+		color window_foreground = color ( 0.26f, 0.27f, 0.3f, 1.0f );
+		color window_borders = color ( 0.35f, 0.36f, 0.38f, 1.0f );
+		color window_accent = color ( 0.85f, 0.0f, 0.38f, 1.0f );
+		color window_accent_borders = color ( 0.9f, 0.04f, 0.43f, 1.0f );
 
 		vec2 window_min_size = vec2 ( 300.0f, 300.0f );
 
@@ -324,23 +378,25 @@ namespace sesui {
 		float titlebar_height = 0.1f /* 1/10 */;
 		float group_titlebar_height = 0.05f /* 1/20 */;
 
-		vec2 initial_offset = vec2 ( 22.0f, 22.0f );
+		vec2 initial_offset = vec2 ( 20.0f, 20.0f );
 		float spacing = 8.0f;
 		float padding = 6.0f;
 		float resize_grab_radius = 6.0f;
-		float same_line_offset = 100.0f;
+		float same_line_offset = 145.0f;
 		float scroll_arrow_height = 12.0f;
+
+		vec2 inline_button_size = vec2 ( 80.0f, 20.0f );
 
 		float animation_speed = 4.0f;
 
 		/* control colors */
-		color control_background = color ( 66, 70, 77, 255 );
-		color control_borders = color ( 89, 92, 99, 255 );
-		color control_text = color ( 180, 180, 180, 255 );
-		color control_text_hovered = color ( 255, 255, 255, 255 );
-		color control_accent = color ( 0xda, 0x00, 0x62, 255 );
-		color control_accent_borders = color ( 0xda + 12, 0x00 + 12, 0x62 + 12, 255 );
-		color tab_selected = color ( 0xda + 12, 0x00 + 12, 0x62 + 12, 255 );
+		color control_background = color ( 0.26f, 0.27f, 0.3f, 1.0f );
+		color control_borders = color ( 0.35f, 0.36f, 0.38f, 1.0f );
+		color control_text = color ( 0.71f, 0.71f, 0.71f, 1.0f );
+		color control_text_hovered = color ( 1.0f, 1.0f, 1.0f, 1.0f );
+		color control_accent = color ( 0.85f, 0.0f, 0.38f, 1.0f );
+		color control_accent_borders = color ( 0.9f, 0.04f, 0.43f, 1.0f );
+		color tab_selected = color ( 0.9f, 0.04f, 0.43f, 1.0f );
 
 		float rounding = 4.0f;
 		float control_rounding = 4.0f;
@@ -348,10 +404,10 @@ namespace sesui {
 		
 		/* control stuff */
 		vec2 checkbox_size = vec2( 14.0f, 14.0f );
-		vec2 slider_size = vec2 ( 160.0f, 8.0f );
-		vec2 button_size = vec2 ( 160.0f, 22.0f );
-		vec2 colorpicker_size = vec2 ( 14.0f, 14.0f );
-		vec2 colorpicker_square_size = vec2 ( 200.0f, 200.0f );
+		vec2 slider_size = vec2 ( 225.0f, 8.0f );
+		vec2 button_size = vec2 ( 225.0f, 20.0f );
+		vec2 color_popup = vec2 ( 220.0f, 220.0f );
+		float color_bar_width = 10.0f;
 
 		font control_font = font( L"Comfortaa Regular", 16, 400, false );
 	};
@@ -367,6 +423,7 @@ namespace sesui {
 	class c_draw_list {
 		enum class object_type : uint8_t {
 			polygon = 0,
+			polygon_multicolor,
 			text,
 			clip,
 		};
@@ -397,6 +454,8 @@ namespace sesui {
 			font font;
 			std::basic_string < ses_char > text;
 			bool text_shadow;
+
+			std::vector< sesui::color > colors;
 		};
 
 		/* list of objects to draw*/
@@ -405,6 +464,9 @@ namespace sesui {
 	public:
 		/* mostly geometric primitives */
 		using draw_polygon_fn = std::add_pointer_t< void ( const std::vector< vec2 > & verticies, const color & color, bool filled ) noexcept >;
+
+		/* mostly geometric primitives */
+		using draw_multicolor_polygon_fn = std::add_pointer_t< void ( const std::vector< sesui::vec2 > & verticies, const std::vector< sesui::color > & colors, bool filled ) noexcept >;
 
 		/* text rendering */
 		using draw_text_fn = std::add_pointer_t< void ( const vec2 & pos, const font & font, const ses_string & text, const color & color ) noexcept >;
@@ -421,6 +483,7 @@ namespace sesui {
 
 		/* these methods must be defined in order for sesui to render any objects */
 		draw_polygon_fn draw_polygon;
+		draw_multicolor_polygon_fn draw_multicolor_polygon;
 		draw_text_fn draw_text;
 		get_text_size_fn get_text_size;
 		get_frametime_fn get_frametime;
@@ -459,7 +522,8 @@ namespace sesui {
 				{},
 				{},
 				{},
-				false
+				false,
+				{}
 				} );
 		}
 
@@ -484,8 +548,103 @@ namespace sesui {
 				{},
 				{},
 				{},
-				false
+				false,
+				{}
 			} );
+		}
+
+		void add_circle ( const vec2& pos, float rad, const color& color, bool filled, bool topmost = false ) {
+			const auto scaled_rad = scale_dpi ( rad );
+			const auto scaled_resolution = static_cast< int > ( scaled_rad * 2 +  2 );
+
+			std::vector< vec2 > verticies { };
+
+			for ( auto i = 0; i < scaled_resolution; i++ ) {
+				verticies.push_back ( vec2 (
+					pos.x - scaled_rad * std::cosf ( pi * ( ( i - 1 ) / ( scaled_resolution / 2.0f ) ) ),
+					pos.y - scaled_rad * std::sinf ( pi * ( ( i - 1 ) / ( scaled_resolution / 2.0f ) ) )
+				) );
+			}
+
+			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
+				object_type::polygon,
+				color,
+				{},
+				clip_mode::none,
+				verticies,
+				filled,
+				{},
+				{},
+				{},
+				false,
+				{}
+			} );
+		}
+
+		void add_rect_gradient ( const rect& rectangle, const color& color_from, const color& color_to, bool horizontal, bool filled, bool topmost = false ) {
+			const auto scaled_w = scale_dpi ( rectangle.w );
+			const auto scaled_h = scale_dpi ( rectangle.h );
+
+			std::vector< vec2 > verticies {
+				vec2 ( rectangle.x, rectangle.y ),
+				vec2 ( rectangle.x + scaled_w, rectangle.y ),
+				vec2 ( rectangle.x + scaled_w, rectangle.y + scaled_h ),
+				vec2 ( rectangle.x, rectangle.y + scaled_h )
+			};
+
+			std::vector< color > colors {
+				color_from,
+				horizontal ? color_to : color_from,
+				color_to,
+				horizontal ? color_from : color_to
+			};
+
+			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
+				object_type::polygon_multicolor,
+				color_from,
+				{},
+				clip_mode::none,
+				verticies,
+				filled,
+				{},
+				{},
+				{},
+				false,
+				colors
+				} );
+		}
+
+		void add_rect_multicolor ( const rect& rectangle, const color& color_from_top, const color& color_to_top, const color& color_from_bottom, const color& color_to_bottom, bool filled, bool topmost = false ) {
+			const auto scaled_w = scale_dpi ( rectangle.w );
+			const auto scaled_h = scale_dpi ( rectangle.h );
+
+			std::vector< vec2 > verticies {
+				vec2 ( rectangle.x, rectangle.y ),
+				vec2 ( rectangle.x + scaled_w, rectangle.y ),
+				vec2 ( rectangle.x + scaled_w, rectangle.y + scaled_h ),
+				vec2 ( rectangle.x, rectangle.y + scaled_h )
+			};
+
+			std::vector< color > colors {
+				color_from_top,
+				color_to_top,
+				color_to_bottom,
+				color_from_bottom
+			};
+
+			objects [ topmost ? static_cast < int >( layer_constants::topmost ) - 1 : static_cast < int >( globals::window_ctx [ globals::cur_window ].layer ) ].push_back ( object_t {
+				object_type::polygon_multicolor,
+				color_from_top,
+				{},
+				clip_mode::none,
+				verticies,
+				filled,
+				{},
+				{},
+				{},
+				false,
+				colors
+				} );
 		}
 
 		void add_line ( const vec2& p1, const vec2& p2, const color& color, bool topmost = false ) {
@@ -504,7 +663,8 @@ namespace sesui {
 				{},
 				{},
 				{},
-				false
+				false,
+				{}
 				} );
 		}
 
@@ -539,7 +699,8 @@ namespace sesui {
 				{},
 				{},
 				{},
-				false
+				false,
+				{}
 				} );
 		}
 
@@ -557,7 +718,8 @@ namespace sesui {
 				pos,
 				font,
 				text.get(),
-				text_shadow
+				text_shadow,
+				{}
 			} );
 		}
 
@@ -575,7 +737,8 @@ namespace sesui {
 				{},
 				{ },
 				L"",
-				false
+				false,
+				{}
 				} );
 		}
 
@@ -592,15 +755,20 @@ namespace sesui {
 				{},
 				{ },
 				L"",
-				false
+				false,
+				{}
 				} );
 		}
 
 		void render ( ) {
 			if ( !draw_polygon
+				|| !draw_multicolor_polygon
 				|| !draw_text
 				|| !get_text_size
-				|| !get_frametime )
+				|| !get_frametime
+				|| !begin_clip
+				|| !end_clip
+				|| !create_font )
 				throw "One or more of the methods required to render the draw list were undefined.";
 
 			/* organized in layer order */
@@ -614,12 +782,15 @@ namespace sesui {
 					case object_type::polygon:
 						draw_polygon ( object.verticies, object.color, object.filled );
 						break;
+					case object_type::polygon_multicolor:
+						draw_multicolor_polygon ( object.verticies, object.colors, object.filled );
+						break;
 					case object_type::text:
 						if ( !object.font.data )
 							throw "Attempted to draw text using invalid font.";
 
 						if ( object.text_shadow )
-							draw_text ( object.text_pos + vec2 ( 1.0f, 1.0f ), object.font, object.text.data ( ), color ( 0, 0, 0, static_cast< int >( object.color.a ) ) );
+							draw_text ( object.text_pos + vec2 ( 1.0f, 1.0f ), object.font, object.text.data ( ), color ( 0.0f, 0.0f, 0.0f, static_cast< int >( object.color.a ) ) );
 
 						draw_text ( object.text_pos, object.font, object.text.data ( ), object.color );
 						break;
@@ -628,6 +799,8 @@ namespace sesui {
 							begin_clip ( object.clip_rect );
 						else if ( object.clip_mode == clip_mode::end )
 							end_clip ( );
+						break;
+					default:
 						break;
 					}
 				}
@@ -684,9 +857,13 @@ namespace sesui {
 
 	SESUI_API void combobox ( const ses_string& name, int& option, const std::vector< ses_string >& list );
 	
+	SESUI_API void textbox ( const ses_string& name, std::basic_string< ses_char >& option );
+
 	SESUI_API void multiselect ( const ses_string& name, const std::vector< std::pair< ses_string, bool& > >& list );
 
 	SESUI_API void slider_ex ( const ses_string& name, float& option, float min, float max, const ses_string& value_str );
+
+	SESUI_API void keybind ( const ses_string& name, int& key, int& mode );
 
 	template < typename type >
 	inline void slider ( const ses_string& name, type& option, type min, type max, const ses_string fmt = L"" ) {

@@ -32,7 +32,7 @@ bool sesui::begin_window ( const ses_string& name, const rect& bounds, bool& ope
 			globals::window_ctx [ globals::cur_window ].layer = 0;
 
 		globals::window_ctx [ globals::cur_window ].bounds = bounds;
-		globals::window_ctx [ globals::cur_window ].anim_time = std::array< float, 256 > { 0.0f };
+		globals::window_ctx [ globals::cur_window ].anim_time = std::array< float, 512 > { 0.0f };
 		globals::window_ctx [ globals::cur_window ].cur_index = 0;
 		//globals::window_ctx [ globals::cur_window ].cur_tab_index = 0;
 		globals::window_ctx [ globals::cur_window ].tab_count = 0;
@@ -101,22 +101,22 @@ bool sesui::begin_window ( const ses_string& name, const rect& bounds, bool& ope
 		vec2 text_size;
 		draw_list.get_text_size ( style.control_font, title, text_size );
 
-		draw_list.add_text(vec2(window_entry->second.bounds.x + scale_dpi(style.spacing), window_entry->second.bounds.y + scale_dpi ( titlebar_rect.h - 6.0f ) * 0.5f - text_size.y * 0.5f ), style.control_font, title, true, color(200, 200, 200, 255));
+		draw_list.add_text(vec2(window_entry->second.bounds.x + scale_dpi(style.spacing), window_entry->second.bounds.y + scale_dpi ( titlebar_rect.h - 6.0f ) * 0.5f - text_size.y * 0.5f ), style.control_font, title, true, color(0.78f, 0.78f, 0.78f, 1.0f));
 	}
 
 	/* close menu button*/
 	if ( !( flags & window_flags::no_closebutton ) ) {
-		draw_list.add_rounded_rect ( exit_rect, 6.0f, color ( 30, 30, 30, 255 ), true );
+		draw_list.add_rounded_rect ( exit_rect, 6.0f, color ( 0.11f, 0.11f, 0.11f, 1.0f ), true );
 		draw_list.add_rounded_rect ( exit_rect, 6.0f, style.window_accent, false ); /* rounding looks more smooth with outline for some reason wtf */
 
 		if ( input::mouse_in_region ( exit_rect ) )
-			draw_list.add_rounded_rect ( exit_rect, 3.0f, color ( static_cast< int >( style.window_accent.r ), static_cast< int >( style.window_accent.g ), static_cast< int >( style.window_accent.b ), 50 ), true );
+			draw_list.add_rounded_rect ( exit_rect, 3.0f, color ( style.window_accent.r, style.window_accent.g, style.window_accent.b, 0.2f ), true );
 
 		if ( input::mouse_in_region ( exit_rect ) && input::key_pressed ( VK_LBUTTON ) )
 			opened = false;
 
-		draw_list.add_line ( vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.333f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.333f ), vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.666f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.666f ), color ( 255, 255, 255, 255 ) );
-		draw_list.add_line ( vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.333f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.666f ), vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.666f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.333f ), color ( 255, 255, 255, 255 ) );
+		draw_list.add_line ( vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.333f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.333f ), vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.666f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.666f ), color ( 1.0f, 1.0f, 1.0f, 1.0f ) );
+		draw_list.add_line ( vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.333f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.666f ), vec2 ( exit_rect.x + scale_dpi ( exit_rect.w ) * 0.666f, exit_rect.y + scale_dpi ( exit_rect.h ) * 0.333f ), color ( 1.0f, 1.0f, 1.0f, 1.0f ) );
 	}
 	
 	if ( window_entry->second.resizing ) {
@@ -153,9 +153,9 @@ void sesui::end_window ( ) {
 
 		bounds.y -= scale_dpi( bounds.h);  
 
-		draw_list.add_rounded_rect ( bounds, style.rounding, color ( style.window_foreground.r, style.window_foreground.g, style.window_foreground.b, static_cast< uint8_t >( 0 ) ).lerp ( style.window_foreground, window_entry->second.tooltip_anim_time ), true, true );
-		draw_list.add_rounded_rect ( bounds, style.rounding, color ( style.window_borders.r, style.window_borders.g, style.window_borders.b, static_cast< uint8_t >( 0 ) ).lerp ( style.window_borders, window_entry->second.tooltip_anim_time ), false, true );
-		draw_list.add_text ( vec2( bounds .x + scale_dpi(style.padding), bounds .y + scale_dpi(style.padding )), style.control_font, window_entry->second.selected_tooltip.data ( ), false, color ( style.control_text.r, style.control_text.g, style.control_text.b, static_cast< uint8_t >( 0 ) ).lerp ( style.control_text, window_entry->second.tooltip_anim_time ), true );
+		draw_list.add_rounded_rect ( bounds, style.rounding, color ( style.window_foreground.r, style.window_foreground.g, style.window_foreground.b, 0.0f ).lerp ( style.window_foreground, window_entry->second.tooltip_anim_time ), true, true );
+		draw_list.add_rounded_rect ( bounds, style.rounding, color ( style.window_borders.r, style.window_borders.g, style.window_borders.b, 1.0f ).lerp ( style.window_borders, window_entry->second.tooltip_anim_time ), false, true );
+		draw_list.add_text ( vec2( bounds .x + scale_dpi(style.padding), bounds .y + scale_dpi(style.padding )), style.control_font, window_entry->second.selected_tooltip.data ( ), false, color ( style.control_text.r, style.control_text.g, style.control_text.b, 1.0f ).lerp ( style.control_text, window_entry->second.tooltip_anim_time ), true );
 	}
 	else {
 		window_entry->second.tooltip_anim_time = 0.0f;
